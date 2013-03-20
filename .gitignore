@@ -3,3 +3,6 @@ doc/_build
 build/
 dist/
 sickle.egg-info/
+
+# PyCharm specific
+/.idea
