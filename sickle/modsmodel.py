@@ -24,25 +24,20 @@ def xml_to_dict(tree, paths=['.//'], nsmap={}, strip_ns=False):
     for path in paths:
         elements = tree.findall(path, nsmap)
         for element in elements:
-            #attributes = element.keys()
-            #for attribute in attributes:
             tag = element.tag
-            #    attr = element.get(attribute)
             if strip_ns:
                 tag = re.sub(r'\{.*\}', '', tag)
+            # We need to look for specific attributes
+            # like <mods:namePart type="family">FamilyName</mods:namePart>
+            # TODO: family and given name should be kept together
             if tag == "namePart":
                 element_type = element.get('type')
                 if element_type:
+                    # Create a new tag
                     newtag = tag + '-' + element_type
-                    print "namePart GEVONDEN", element.items()
-                    #print element.get('type')
-                    #fields[tag + 'family'].append(element.get('family'))
-                    #fields[tag + 'given'].append(element.get('given'))
-                    print newtag + ' = ' + element.text
+                    #print newtag + ' = ' + element.text
                     fields[newtag].append(element.text)
             fields[tag].append(element.text)
-
-             #   fields[attribute].append(attr)
     return dict(fields)
 
 
@@ -66,7 +61,7 @@ class ModsRecord(Record):
                 self.xml.find('.//' + self._oai_namespace + 'metadata'
                 ).getchildren()[0], strip_ns=self._strip_ns)
 
-            print type(self.metadata), self.metadata.items() # dict
+            #print type(self.metadata), self.metadata.items() # dict
 
 
 
