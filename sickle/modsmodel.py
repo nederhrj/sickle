@@ -30,6 +30,47 @@ def xml_to_dict(tree, paths=['.//'], nsmap={}, strip_ns=False):
             # We need to look for specific attributes
             # like <mods:namePart type="family">FamilyName</mods:namePart>
             # TODO: family and given name should be kept together
+            if tag == 'name':
+                # name//namePart
+                tag_name = defaultdict(list)
+                for item in element.getchildren():
+                    if item.items() != []:
+
+                        attribute = item.items()[0][0]
+                        #print "ATTRIBUTE NAME: ", attribute
+                        #print "CONTENTS", item.get(attribute)
+                        #print "VALUE: ", item.text
+                        #print "items : ", item.get('type'), item.text
+                        tag_name[item.get(attribute)].append(item.text)
+                    else:
+                        if strip_ns:
+                            tag = re.sub(r'\{.*\}', '', item.tag)
+                            #print "ELEMENT : ", tag, item.text
+                            tag_name[tag].append(item.text)
+                    #print tag, item.get('type'), item.text, item.text
+                    #iter('namePart'):
+                    #print [{item.get('type'):item.text for item in element.getchildren()}]
+                print tag_name
+
+
+
+
+                names = element.getchildren()
+                for name in names:
+                    items = name.items()
+                    #print items
+                    for item in items:
+                        pass
+                #        print item
+                #        print element.get(item[1])
+                #print names
+                #print element.get('type')
+                #print element.text
+
+                #print [{element.get('type'):element.text for name in names}]
+
+
+
             if tag == "namePart":
                 element_type = element.get('type')
                 if element_type:
@@ -37,6 +78,7 @@ def xml_to_dict(tree, paths=['.//'], nsmap={}, strip_ns=False):
                     newtag = tag + '-' + element_type
                     #print newtag + ' = ' + element.text
                     fields[newtag].append(element.text)
+            print tag, element.text
             fields[tag].append(element.text)
     return dict(fields)
 
@@ -62,6 +104,5 @@ class ModsRecord(Record):
                 ).getchildren()[0], strip_ns=self._strip_ns)
 
             #print type(self.metadata), self.metadata.items() # dict
-
 
 
