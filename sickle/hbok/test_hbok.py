@@ -16,7 +16,7 @@ from sickle.hbok.record import ModsRecord2
 
 from sickle.oaiexceptions import BadArgument, CannotDisseminateFormat,\
     IdDoesNotExist, NoSetHierarchy, BadResumptionToken, NoRecordsMatch
-from nose.tools import assert_raises, assert_true, raises
+#from nose.tools import assert_raises, assert_true, raises
 
 import logging
 

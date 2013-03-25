@@ -8,10 +8,19 @@
 """
 
 from lxml import etree
+
 import re
 from sickle.models import Record, Header
 
 MODS_NAMESPACE = '{http://www.loc.gov/mods/v3}'
+
+ns = {'mods': 'http://www.loc.gov/mods/v3',
+      'xml': 'http://www.w3.org/XML/1998/namespace',
+      'dai': 'info:eu-repo/dai',
+      'gal': 'info:eu-repo/grantAgreement',
+      'didl' : 'urn:mpeg:mpeg21:2002:02-DIDL-NS'
+      }
+
 
 class ModsRecord2(Record):
     def __init__(self, record_element, strip_ns=True, nsMap={}):
@@ -22,39 +31,58 @@ class ModsRecord2(Record):
         self.deleted = self.header.deleted
         if not self.deleted:
             self.metadata = self.xml.find('.//' + self._oai_namespace + 'metadata')
-            print "METADATA ",  self.metadata
+            #print "METADATA ",  self.metadata
+            names = self.getNames()
+            abstract = self.getAbstract()
+            print names, abstract
 
-            abstract = self.metadata.findall('.//' + MODS_NAMESPACE + 'abstract')
+    def _concatenateNames(self, family=None, given=None):
+        """
+        Concatenate family and given names to one String
+        :param family:
+        :param given:
+        :return: String
+        """
+        name = ""
+        if family:
+            name += family
+        if given:
+            name += ', ' + given
+        return name
 
-            editors = ""
-            family = ""
-            given = ""
-            for name in self.nodeset(self.metadata, '//mods:mods/mods:relatedItem/mods:name'):
-                if self.xpath(name, 'mods:role/mods:roleTerm/text()') == 'edt':
-                    for namePart in self.nodeset(name, 'mods:namePart'):
-                        type = self.xpath(namePart, '@type')
-                        if type == 'family':  family = self.xpath(namePart, 'text()')
-                        elif type == 'given':  given = self.xpath(namePart, 'text()')
+    def _getNameParts(self, name):
+        names = []
+        for namePart in name.xpath('mods:namePart', namespaces=ns):
+            type = namePart.xpath('@type', namespaces=ns)[0]
+            if type == 'family':
+                family = namePart.xpath('text()', namespaces=ns)[0]
+            elif type == 'given':
+                given = namePart.xpath('text()', namespaces=ns)[0]
+        person = self._concatenateNames(family, given)
+        names.append(person)
+        return names
 
-            #keywords = self.metadata.findall('.//' + MODS_NAMESPACE + 'namePart/')
+    def getNames(self):
+        authors = []
+        advisors = []
+        organisations = []
 
-            #date = self.xml.xpath(self.metadata, '//mods:originInfo/mods:dateIssued/text()')
+        for name in self.xml.xpath('.//mods:name', namespaces=ns):
+            role = name.xpath('mods:role/mods:roleTerm/text()',  namespaces=ns)[0]
+            if role == 'aut':
+                authors = self._getNameParts(name)
+            elif role == 'ths':
+                advisors = self._getNameParts(name)
+            else:
+                for namePart in name.xpath('mods:namePart', namespaces=ns):
+                    print role, namePart.xpath('text()', namespaces=ns)[0]
+                    organisations.append(namePart.xpath('text()', namespaces=ns)[0])
+        return authors, advisors, organisations
 
-            #print [{element.tag: element.text for element in elements}]
-
-    def xpath(self, node, path):
-        result = node.xpath(path, self.nsMap)
-        return result and result[0] or ''
-
-    def nodeset(self, node, path):
-            return node.xpath(path, self.nsMap)
-
-    def _getMods(self, recordId):
-        return
+    def getAbstract(self):
+        return self.xml.xpath('.//mods:abstract/text()', namespaces={'mods': 'http://www.loc.gov/mods/v3'})
 
 
-    def _getAbstract(self):
-        return self.xml.xpath('.//' + MODS_NAMESPACE + 'mods:abstract', namespaces=self._oai_namespace)
 
 
 
